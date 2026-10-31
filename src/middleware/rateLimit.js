@@ -6,6 +6,10 @@ const cleanup = setInterval(() => {
 cleanup.unref();
 
 module.exports = ({ windowMs = 60_000, max = 60 } = {}) => (req, res, next) => {
+  // Reads are authenticated and side-effect free. Do not let normal screen
+  // refreshes consume the mutation budget or block the post-write refresh.
+  if (['GET', 'HEAD', 'OPTIONS'].includes(req.method.toUpperCase())) return next();
+
   const now = Date.now();
   const key = `${req.ip}:${req.method}:${req.baseUrl}${req.path}`;
   const bucket = buckets.get(key);
