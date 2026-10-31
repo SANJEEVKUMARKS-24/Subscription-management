@@ -1,12 +1,12 @@
 const db = require('../config/database');
 
 class InvoiceRepository {
-  async findAll(customerId = null) {
-    const result = await db.query(
-      `SELECT * FROM invoices WHERE ($1::bigint IS NULL OR customer_id = $1) ORDER BY created_at DESC LIMIT 100`,
-      [customerId]
-    );
-    return result.rows;
+  async findAll(customerId = null, limit = 20, offset = 0) {
+    const [result, count] = await Promise.all([
+      db.query(`SELECT * FROM invoices WHERE ($1::bigint IS NULL OR customer_id=$1) ORDER BY invoice_date DESC,invoice_id DESC LIMIT $2 OFFSET $3`, [customerId, limit, offset]),
+      db.query(`SELECT COUNT(*)::int AS total FROM invoices WHERE ($1::bigint IS NULL OR customer_id=$1)`, [customerId]),
+    ]);
+    return { rows: result.rows, total: count.rows[0].total };
   }
 
   async create({ invoiceNumber, customerId, subscriptionId, billingPeriodStart, billingPeriodEnd, dueDate, currency = 'USD', subtotal, discountAmount = 0, taxAmount = 0, total, client = db }) {

@@ -64,12 +64,12 @@ class UserRepository {
   }
 
   async list({ customerId = null, limit = 20, offset = 0 } = {}) {
-    const result = await db.query(
+    const [result, count] = await Promise.all([db.query(
       `SELECT user_id AS id, customer_id, full_name, email, role, is_active, created_at
        FROM users WHERE ($1::bigint IS NULL OR customer_id=$1) ORDER BY created_at DESC LIMIT $2 OFFSET $3`,
       [customerId, limit, offset]
-    );
-    return result.rows;
+    ), db.query(`SELECT COUNT(*)::int AS total FROM users WHERE ($1::bigint IS NULL OR customer_id=$1)`, [customerId])]);
+    return { rows: result.rows, total: count.rows[0].total };
   }
 }
 

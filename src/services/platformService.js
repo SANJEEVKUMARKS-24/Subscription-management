@@ -2,14 +2,13 @@ const crypto = require('node:crypto');
 const db = require('../config/database');
 const env = require('../config/env');
 const stripeProvider = require('./stripeProvider');
+const platformRepository = require('../repositories/platformRepository');
+const { parsePagination, paginationMeta } = require('../utils/pagination');
 
 const fail = (message, statusCode = 400) => Object.assign(new Error(message), { statusCode });
 const isManager = (user) => ['ADMIN', 'STAFF'].includes(String(user?.role || '').toUpperCase());
 const tenantId = (user) => String(user?.role || '').toUpperCase() === 'CUSTOMER' ? Number(user.customerId) : null;
-const page = (query = {}) => ({
-  limit: Math.min(Math.max(Number.parseInt(query.limit, 10) || 20, 1), 100),
-  offset: Math.max(Number.parseInt(query.offset, 10) || 0, 0),
-});
+const page = parsePagination;
 const amountCents = (value, field = 'amount') => {
   const number = Number(value);
   if (!Number.isFinite(number) || number < 0 || Math.abs(Math.round(number * 100) - number * 100) > 1e-7) throw fail(`${field} must be a non-negative amount with at most two decimal places`);
@@ -108,20 +107,14 @@ class PlatformService {
   async listCustomers(query = {}, user) {
     if (!isManager(user)) throw fail('Only staff can list customers', 403);
     const { limit, offset } = page(query);
-    const result = await db.query(
-      `SELECT customer_id, company_name, email, phone
-       FROM customers WHERE is_active=TRUE ORDER BY company_name, customer_id LIMIT $1 OFFSET $2`,
-      [limit, offset]
-    );
-    return { data: result.rows, meta: { limit, offset } };
+    const result = await platformRepository.listCustomers(limit, offset);
+    return { data: result.rows, meta: paginationMeta({ limit, offset, total: result.total }) };
   }
 
   async listProducts(query = {}) {
     const { limit, offset } = page(query);
-    const result = await db.query(
-      `SELECT * FROM products WHERE is_active = TRUE ORDER BY name LIMIT $1 OFFSET $2`, [limit, offset]
-    );
-    return { data: result.rows, meta: { limit, offset } };
+    const result = await platformRepository.listProducts(limit, offset);
+    return { data: result.rows, meta: paginationMeta({ limit, offset, total: result.total }) };
   }
 
   async getProduct(id) {
@@ -167,9 +160,10 @@ class PlatformService {
     return product;
   }
 
-  async listVariants(productId) {
-    const result = await db.query(`SELECT * FROM product_variants WHERE product_id = $1 AND is_active = TRUE ORDER BY variant_name`, [productId]);
-    return result.rows;
+  async listVariants(productId, query = {}) {
+    const { limit, offset } = page(query);
+    const result = await platformRepository.listVariants(productId, limit, offset);
+    return { data: result.rows, meta: paginationMeta({ limit, offset, total: result.total }) };
   }
 
   async createVariant(productId, payload, user) {
@@ -209,11 +203,9 @@ class PlatformService {
 
   async listQuotations(user, query = {}) {
     const { limit, offset } = page(query);
-    const result = await db.query(
-      `SELECT * FROM quotations WHERE ($1::bigint IS NULL OR customer_id = $1) ORDER BY created_at DESC LIMIT $2 OFFSET $3`,
-      [tenantId(user), limit, offset]
-    );
-    return { data: result.rows, meta: { limit, offset } };
+    const customerId = tenantId(user);
+    const result = await platformRepository.listQuotations(customerId, limit, offset);
+    return { data: result.rows, meta: paginationMeta({ limit, offset, total: result.total }) };
   }
 
   async getQuotation(id, user) {
@@ -235,8 +227,8 @@ class PlatformService {
 
   async listQuotationTemplates(query = {}) {
     const { limit, offset } = page(query);
-    const result = await db.query(`SELECT * FROM quotation_templates WHERE is_active=TRUE ORDER BY created_at DESC LIMIT $1 OFFSET $2`, [limit, offset]);
-    return { data: result.rows, meta: { limit, offset } };
+    const result = await platformRepository.listQuotationTemplates(limit, offset);
+    return { data: result.rows, meta: paginationMeta({ limit, offset, total: result.total }) };
   }
 
   async createQuotationTemplate(payload, user) {
@@ -375,11 +367,8 @@ class PlatformService {
 
   async listInvoices(user, query = {}) {
     const { limit, offset } = page(query);
-    const result = await db.query(
-      `SELECT * FROM invoices WHERE ($1::bigint IS NULL OR customer_id=$1) ORDER BY invoice_date DESC, invoice_id DESC LIMIT $2 OFFSET $3`,
-      [tenantId(user), limit, offset]
-    );
-    return { data: result.rows, meta: { limit, offset } };
+    const result = await platformRepository.listInvoices(tenantId(user), limit, offset);
+    return { data: result.rows, meta: paginationMeta({ limit, offset, total: result.total }) };
   }
 
   async getInvoice(id, user) {
@@ -512,13 +501,10 @@ class PlatformService {
     return result;
   }
 
-  async listPayments(invoiceId, user) {
-    const result = await db.query(
-      `SELECT p.* FROM payments p JOIN invoices i ON i.invoice_id=p.invoice_id
-       WHERE p.invoice_id=$1 AND ($2::bigint IS NULL OR i.customer_id=$2) ORDER BY p.created_at DESC LIMIT 100`,
-      [invoiceId, tenantId(user)]
-    );
-    return result.rows;
+  async listPayments(invoiceId, user, query = {}) {
+    const { limit, offset } = page(query);
+    const result = await platformRepository.listPayments(invoiceId, tenantId(user), limit, offset);
+    return { data: result.rows, meta: paginationMeta({ limit, offset, total: result.total }) };
   }
 
   async createCheckout(invoiceId, user, req) {
@@ -773,13 +759,14 @@ class PlatformService {
   async listDiscounts(user, query = {}) {
     if (!isManager(user)) throw fail('Only staff can manage discounts', 403);
     const { limit, offset } = page(query);
-    const result = await db.query(`SELECT * FROM discounts ORDER BY created_at DESC LIMIT $1 OFFSET $2`, [limit, offset]);
-    return { data: result.rows, meta: { limit, offset } };
+    const result = await platformRepository.listDiscounts(limit, offset);
+    return { data: result.rows, meta: paginationMeta({ limit, offset, total: result.total }) };
   }
 
-  async listTaxes() {
-    const result = await db.query(`SELECT * FROM taxes WHERE is_active=TRUE AND effective_from<=NOW() AND (effective_until IS NULL OR effective_until>=NOW()) ORDER BY tax_name`);
-    return result.rows;
+  async listTaxes(query = {}) {
+    const { limit, offset } = page(query);
+    const result = await platformRepository.listTaxes(limit, offset);
+    return { data: result.rows, meta: paginationMeta({ limit, offset, total: result.total }) };
   }
 
   async createTax(payload, user) {

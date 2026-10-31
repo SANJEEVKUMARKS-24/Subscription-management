@@ -29,8 +29,8 @@ class BillingController {
   }
   async listPayments(req, res, next) {
     try {
-      const data = await platformService.listPayments(req.params.invoiceId, req.user);
-      return res.status(200).json({ success: true, data });
+      const result = await platformService.listPayments(req.params.invoiceId, req.user, req.query);
+      return res.status(200).json({ success: true, ...result });
     } catch (error) { return next(error); }
   }
   async recordPayment(req, res, next) {

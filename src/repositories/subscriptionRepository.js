@@ -2,7 +2,7 @@ const db = require('../config/database');
 
 class SubscriptionRepository {
   async findAll(customerId = null, limit = 20, offset = 0) {
-    const result = await db.query(
+    const [result, count] = await Promise.all([db.query(
       `SELECT s.*, c.company_name, c.company_name AS customer_name,
               p.plan_name, p.price, p.billing_frequency
        FROM subscriptions s
@@ -11,9 +11,9 @@ class SubscriptionRepository {
        WHERE ($1::bigint IS NULL OR s.customer_id=$1)
        ORDER BY s.created_at DESC, s.subscription_id DESC LIMIT $2 OFFSET $3`,
       [customerId, limit, offset]
-    );
+    ), db.query(`SELECT COUNT(*)::int AS total FROM subscriptions WHERE ($1::bigint IS NULL OR customer_id=$1)`, [customerId])]);
 
-    return result.rows;
+    return { rows: result.rows, total: count.rows[0].total };
   }
 
   async findById(id, customerId = null) {

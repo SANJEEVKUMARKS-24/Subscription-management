@@ -26,4 +26,8 @@
 .subscription-actions{white-space:nowrap}
 .subscription-actions .text-action{margin-left:9px}
 .close-subscription-action{color:#a76252}
+.pagination-controls{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:14px 2px;color:#87918a;font-size:10px}
+.pagination-controls>div{display:flex;gap:8px}
+.pagination-controls .button{min-height:32px;padding:0 11px;font-size:10px}
+.pagination-controls .button:disabled{opacity:.5;cursor:not-allowed}
 @media(max-width:600px){.subscription-form{grid-template-columns:1fr}.subscription-form-error,.subscription-form-actions{grid-column:auto}}

@@ -2,8 +2,11 @@ const db = require('../config/database');
 
 class PlanRepository {
   async findAll(limit = 20, offset = 0) {
-    const result = await db.query(`SELECT * FROM plans WHERE is_active = TRUE ORDER BY created_at DESC LIMIT $1 OFFSET $2`, [limit, offset]);
-    return result.rows;
+    const [result, count] = await Promise.all([
+      db.query(`SELECT * FROM plans WHERE is_active = TRUE ORDER BY created_at DESC LIMIT $1 OFFSET $2`, [limit, offset]),
+      db.query(`SELECT COUNT(*)::int AS total FROM plans WHERE is_active=TRUE`),
+    ]);
+    return { rows: result.rows, total: count.rows[0].total };
   }
 
   async findById(id) {

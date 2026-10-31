@@ -65,6 +65,8 @@ for confirmation before closing one.
 Use an `Authorization: Bearer <token>` header for API routes other than registration, login, password
 reset, health and signed webhooks. Writes that create subscriptions, quotations, invoices, payments, or
 refunds require a unique `Idempotency-Key`. Customer users are scoped to their authenticated tenant.
+Paginated list endpoints accept `limit` and `offset` (maximum limit 100) and return `page`, `total`,
+`totalPages`, `hasPrevious`, and `hasNext` in `meta`.
 
 Recurring billing can be invoked by `npm run billing:run` or scheduled externally. Configure
 `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`, and `PUBLIC_APP_URL` for online payments. Add a Stripe

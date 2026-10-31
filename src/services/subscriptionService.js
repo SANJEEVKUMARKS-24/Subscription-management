@@ -1,13 +1,13 @@
 const subscriptionRepository = require('../repositories/subscriptionRepository');
 const { idempotent, audit, fail } = require('./platformService');
+const { parsePagination, paginationMeta } = require('../utils/pagination');
 
 class SubscriptionService {
   async listSubscriptions(user, query = {}) {
     const customerId = user.role === 'CUSTOMER' ? user.customerId : null;
-    const limit = Math.min(Math.max(Number.parseInt(query.limit, 10) || 20, 1), 100);
-    const offset = Math.max(Number.parseInt(query.offset, 10) || 0, 0);
-    const rows = await subscriptionRepository.findAll(customerId, limit, offset);
-    return { success: true, data: rows, meta: { limit, offset }, message: 'Subscriptions listed successfully.' };
+    const { limit, offset } = parsePagination(query);
+    const result = await subscriptionRepository.findAll(customerId, limit, offset);
+    return { success: true, data: result.rows, meta: paginationMeta({ limit, offset, total: result.total }), message: 'Subscriptions listed successfully.' };
   }
 
   async createSubscription(payload = {}, user, req) {

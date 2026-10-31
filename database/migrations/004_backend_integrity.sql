@@ -14,14 +14,15 @@ ALTER TABLE subscriptions ADD COLUMN IF NOT EXISTS payment_terms_days INTEGER NO
 ALTER TABLE subscriptions DROP CONSTRAINT IF EXISTS subscriptions_payment_terms_days_check;
 ALTER TABLE subscriptions ADD CONSTRAINT subscriptions_payment_terms_days_check CHECK (payment_terms_days >= 0);
 ALTER TABLE subscription_items ALTER COLUMN product_id DROP NOT NULL;
-ALTER TABLE product_variants DROP CONSTRAINT IF EXISTS product_variants_product_variant_unique;
-ALTER TABLE product_variants ADD CONSTRAINT product_variants_product_variant_unique UNIQUE (product_id, variant_id);
+-- Replace the single-column foreign keys before changing their referenced unique key.
 ALTER TABLE plan_items DROP CONSTRAINT IF EXISTS plan_items_variant_id_fkey;
 ALTER TABLE plan_items DROP CONSTRAINT IF EXISTS plan_items_variant_product_fkey;
-ALTER TABLE plan_items ADD CONSTRAINT plan_items_variant_product_fkey
-  FOREIGN KEY (product_id, variant_id) REFERENCES product_variants(product_id, variant_id) ON DELETE RESTRICT;
 ALTER TABLE subscription_items DROP CONSTRAINT IF EXISTS subscription_items_variant_id_fkey;
 ALTER TABLE subscription_items DROP CONSTRAINT IF EXISTS subscription_items_variant_product_fkey;
+ALTER TABLE product_variants DROP CONSTRAINT IF EXISTS product_variants_product_variant_unique;
+ALTER TABLE product_variants ADD CONSTRAINT product_variants_product_variant_unique UNIQUE (product_id, variant_id);
+ALTER TABLE plan_items ADD CONSTRAINT plan_items_variant_product_fkey
+  FOREIGN KEY (product_id, variant_id) REFERENCES product_variants(product_id, variant_id) ON DELETE RESTRICT;
 ALTER TABLE subscription_items DROP CONSTRAINT IF EXISTS subscription_items_variant_product_check;
 ALTER TABLE subscription_items ADD CONSTRAINT subscription_items_variant_product_fkey
   FOREIGN KEY (product_id, variant_id) REFERENCES product_variants(product_id, variant_id) ON DELETE RESTRICT;

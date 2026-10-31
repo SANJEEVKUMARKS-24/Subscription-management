@@ -4,6 +4,7 @@ const { signToken } = require('../config/auth');
 const userRepository = require('../repositories/userRepository');
 const db = require('../config/database');
 const env = require('../config/env');
+const { parsePagination, paginationMeta } = require('../utils/pagination');
 
 class AuthService {
   async login({ email, password }) {
@@ -133,11 +134,11 @@ class AuthService {
 
   async listUsers(query, actor) {
     if (actor.role !== 'ADMIN') throw Object.assign(new Error('Only admins can list users'), { statusCode: 403 });
-    const limit = Math.min(Math.max(Number.parseInt(query.limit, 10) || 20, 1), 100);
-    const offset = Math.max(Number.parseInt(query.offset, 10) || 0, 0);
+    const { limit, offset } = parsePagination(query);
     const customerId = query.customerId ? Number(query.customerId) : null;
     if (customerId !== null && !Number.isSafeInteger(customerId)) throw Object.assign(new Error('customerId must be an integer'), { statusCode: 400 });
-    return { data: await userRepository.list({ customerId, limit, offset }), meta: { limit, offset } };
+    const result = await userRepository.list({ customerId, limit, offset });
+    return { data: result.rows, meta: paginationMeta({ limit, offset, total: result.total }) };
   }
 }
 

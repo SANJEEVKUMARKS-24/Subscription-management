@@ -28,7 +28,7 @@ exports.archiveProduct = async (req, res, next) => {
   catch (error) { return next(error); }
 };
 exports.listVariants = async (req, res, next) => {
-  try { return res.json({ success: true, data: await platformService.listVariants(req.params.productId) }); }
+  try { return res.json({ success: true, ...(await platformService.listVariants(req.params.productId, req.query)) }); }
   catch (error) { return next(error); }
 };
 exports.createVariant = async (req, res, next) => {
@@ -92,7 +92,7 @@ exports.archiveDiscount = async (req, res, next) => {
   catch (error) { return next(error); }
 };
 exports.listTaxes = async (req, res, next) => {
-  try { return res.json({ success: true, data: await platformService.listTaxes() }); }
+  try { return res.json({ success: true, ...(await platformService.listTaxes(req.query)) }); }
   catch (error) { return next(error); }
 };
 exports.createTax = async (req, res, next) => {
