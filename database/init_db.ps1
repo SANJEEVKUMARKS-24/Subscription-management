@@ -12,6 +12,7 @@ $env:PGPASSWORD = $password
 $schemaFile = Join-Path $PSScriptRoot 'migrations\001_schema.sql'
 $seedFile = Join-Path $PSScriptRoot 'migrations\002_seed.sql'
 $helperFile = Join-Path $PSScriptRoot 'migrations\003_backend_helpers.sql'
+$integrityFile = Join-Path $PSScriptRoot 'migrations\004_backend_integrity.sql'
 
 Write-Host "Resetting PostgreSQL database: $dbName"
 & "$pgBin\dropdb.exe" -h $hostName -p $port -U $user --if-exists $dbName
@@ -31,6 +32,10 @@ if ($LASTEXITCODE -ne 0) { throw "seed migration failed" }
 Write-Host "Applying backend helper views and functions..."
 & "$pgBin\psql.exe" -v ON_ERROR_STOP=1 -h $hostName -p $port -U $user -d $dbName -f $helperFile
 if ($LASTEXITCODE -ne 0) { throw "backend helper migration failed" }
+
+Write-Host "Applying backend integrity migration..."
+& "$pgBin\psql.exe" -v ON_ERROR_STOP=1 -h $hostName -p $port -U $user -d $dbName -f $integrityFile
+if ($LASTEXITCODE -ne 0) { throw "backend integrity migration failed" }
 
 Write-Host "Database initialization complete."
 Write-Host ("Connection: postgresql://{0}:{1}@{2}:{3}/{4}" -f $user, $password, $hostName, $port, $dbName)

@@ -7,7 +7,11 @@
   "scripts": {
     "dev": "nodemon src/server.js",
     "start": "node src/server.js",
-    "check": "node --check src/server.js"
+    "check": "node --check src/server.js",
+    "test": "node --test test/*.test.js",
+    "db:migrate": "node src/scripts/migrate.js",
+    "db:create-admin": "node src/scripts/createAdmin.js",
+    "billing:run": "node src/scripts/runBilling.js"
   },
   "keywords": [
     "express",
@@ -22,9 +26,11 @@
     "express": "^4.19.2",
     "jsonwebtoken": "^9.0.2",
     "morgan": "^1.10.0",
-    "pg": "^8.13.0"
+    "pg": "^8.13.0",
+    "stripe": "^23.1.0"
   },
   "devDependencies": {
-    "nodemon": "^3.1.14"
+    "nodemon": "^3.1.14",
+    "supertest": "^7.3.1"
   }
 }

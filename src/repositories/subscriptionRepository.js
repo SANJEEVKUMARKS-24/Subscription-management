@@ -1,48 +1,53 @@
 const db = require('../config/database');
 
 class SubscriptionRepository {
-  async findAll() {
+  async findAll(customerId = null, limit = 20, offset = 0) {
     const result = await db.query(
-      `SELECT * FROM subscriptions ORDER BY created_at DESC`
+      `SELECT * FROM subscriptions WHERE ($1::bigint IS NULL OR customer_id=$1) ORDER BY created_at DESC LIMIT $2 OFFSET $3`,
+      [customerId, limit, offset]
     );
 
     return result.rows;
   }
 
-  async findById(id) {
+  async findById(id, customerId = null) {
     const result = await db.query(
-      `SELECT * FROM subscriptions WHERE id = $1`,
-      [id]
+      `SELECT * FROM subscriptions WHERE subscription_id = $1 AND ($2::bigint IS NULL OR customer_id = $2)`,
+      [id, customerId]
     );
 
     return result.rows[0] || null;
   }
 
-  async create({ subscriptionNumber, customerId, planId, status, currency }) {
-    const result = await db.query(
+  async create({ subscriptionNumber, customerId, planId, status = 'DRAFT', startDate = new Date().toISOString().slice(0, 10), expiryDate = null, paymentTermsDays = 0, client = db }) {
+    const result = await client.query(
       `INSERT INTO subscriptions (
         subscription_number,
         customer_id,
         plan_id,
         status,
-        currency
-      ) VALUES ($1, $2, $3, $4, $5)
+        start_date,
+        expiry_date,
+        payment_terms_days
+      ) VALUES ($1, $2, $3, $4, $5, $6, $7)
        RETURNING *`,
-      [subscriptionNumber, customerId, planId, status, currency]
+      [subscriptionNumber, customerId, planId, status, startDate, expiryDate, paymentTermsDays]
     );
 
     return result.rows[0];
   }
 
-  async update(id, fields) {
-    const keys = Object.keys(fields);
-    const setClause = keys.map((key, index) => `${key} = $${index + 2}`).join(', ');
-    const values = [id, ...keys.map((key) => fields[key])];
+  async update(id, fields, customerId = null) {
+    const allowed = new Set(['status', 'expiry_date', 'next_billing_at', 'payment_terms_days']);
+    const entries = Object.entries(fields).filter(([key]) => allowed.has(key));
+    if (!entries.length) return this.findById(id, customerId);
+    const setClause = entries.map(([key], index) => `${key} = $${index + 2}`).join(', ');
+    const values = [id, ...entries.map(([, value]) => value), customerId];
 
     const result = await db.query(
       `UPDATE subscriptions
        SET ${setClause}, updated_at = now()
-       WHERE id = $1
+       WHERE subscription_id = $1 AND ($${values.length}::bigint IS NULL OR customer_id = $${values.length})
        RETURNING *`,
       values
     );
@@ -50,12 +55,40 @@ class SubscriptionRepository {
     return result.rows[0] || null;
   }
 
-  async delete(id) {
+  async delete(id, customerId = null) {
     const result = await db.query(
-      `DELETE FROM subscriptions WHERE id = $1 RETURNING *`,
-      [id]
+      `UPDATE subscriptions SET status = 'CLOSED', updated_at = now()
+       WHERE subscription_id = $1 AND ($2::bigint IS NULL OR customer_id = $2)
+       RETURNING *`,
+      [id, customerId]
     );
 
+    return result.rows[0] || null;
+  }
+
+  async findPausePolicy(id, customerId = null) {
+    const result = await db.query(
+      `SELECT s.subscription_id, s.customer_id, s.status, p.allow_pause
+       FROM subscriptions s JOIN plans p ON p.plan_id = s.plan_id
+       WHERE s.subscription_id = $1 AND ($2::bigint IS NULL OR s.customer_id = $2)`,
+      [id, customerId]
+    );
+    return result.rows[0] || null;
+  }
+
+  async findClosurePolicy(id, customerId = null) {
+    const result = await db.query(
+      `SELECT s.subscription_id,s.customer_id,s.status,p.allow_early_closure FROM subscriptions s JOIN plans p ON p.plan_id=s.plan_id
+       WHERE s.subscription_id=$1 AND ($2::bigint IS NULL OR s.customer_id=$2)`, [id, customerId]
+    );
+    return result.rows[0] || null;
+  }
+
+  async activate(id) {
+    const result = await db.query(
+      `UPDATE subscriptions SET status='ACTIVE',next_billing_at=COALESCE(next_billing_at,NOW()),updated_at=NOW()
+       WHERE subscription_id=$1 AND status IN ('DRAFT','CONFIRMED') RETURNING *`, [id]
+    );
     return result.rows[0] || null;
   }
 }

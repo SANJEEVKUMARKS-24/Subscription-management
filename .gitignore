@@ -3,6 +3,7 @@ Brightloop_Database_Architecture_V2.pdf
 *.log
 .env
 .env.*
+!.env.example
 .DS_Store
 Thumbs.db
 .vscode/
@@ -13,3 +14,4 @@ node_modules/
 npm-debug.log*
 coverage/
 logs/
+/frontend/dist/

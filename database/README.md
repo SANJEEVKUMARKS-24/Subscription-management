@@ -7,6 +7,8 @@ This directory contains the PostgreSQL database schema, seed data, and backend-r
 - `migrations/001_schema.sql` — full PostgreSQL schema with enums, tables, constraints, indexes, and triggers.
 - `migrations/002_seed.sql` — sample tenant, user, product, plan, tax, and discount data.
 - `migrations/003_backend_helpers.sql` — backend-friendly views and helper functions for customer data, outstanding balances, overdue invoices, and discount checks.
+- `migrations/004_backend_integrity.sql` — adds billing snapshots, payment/webhook idempotency, tenant-role constraints, currency, and renewal support.
+- `migrations/005_stripe_checkout.sql` — stores Stripe Checkout session IDs and refund failure state.
 - `init_db.ps1` — PowerShell helper to drop/create the database and run all migration files.
 - `schema.sql` and `seed.sql` — static copies kept for direct use or quick manual application.
 
@@ -34,6 +36,14 @@ postgresql://postgres:postgres@localhost:5432/subscription_management
 - Subscriptions: subscriptions, subscription_items
 - Billing: invoices, invoice_items, payments, payment_refunds, taxes
 - Discounts and audit: discounts, discount_products, discount_usages, audit_logs, billing_runs
+- Integrity: idempotency_keys, webhook_events
+
+## Application database setup
+
+Set `DATABASE_URL`, then run `npm run db:migrate`. The runner records each migration in
+`schema_migrations` and does not load development sample data. Create the first admin with
+`ADMIN_EMAIL`, `ADMIN_NAME`, and `ADMIN_PASSWORD` (minimum 12 characters) set in the environment,
+then run `npm run db:create-admin`. Never use the reset script against a shared or production database.
 
 ## Backend-ready views and helpers
 

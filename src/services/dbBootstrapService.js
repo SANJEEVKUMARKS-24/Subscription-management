@@ -1,10 +1,9 @@
-const db = require('../config/database');
+const migrationService = require('./migrationService');
 
 class DbBootstrapService {
   async ensureSchema() {
-    const sql = require('fs').readFileSync(require('path').join(__dirname, '../../database/schema.sql'), 'utf8');
-    await db.query(sql);
-    return { success: true, message: 'Database schema checked and initialized successfully.' };
+    const applied = await migrationService.migrate();
+    return { success: true, applied, message: 'Database migrations completed successfully.' };
   }
 }
 
