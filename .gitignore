@@ -1,0 +1,10 @@
+# Ignore project artifacts that should not be committed
+Brightloop_Database_Architecture_V2.pdf
+*.log
+.env
+.env.*
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+node_modules/
