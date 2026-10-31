@@ -8,3 +8,8 @@ Thumbs.db
 .vscode/
 .idea/
 node_modules/
+
+# Extra Node backend ignores
+npm-debug.log*
+coverage/
+logs/
