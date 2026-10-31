@@ -2,6 +2,11 @@ const platformService = require('../services/platformService');
 
 const sendResult = (res, result, defaultStatus = 200) => res.status(result.status || defaultStatus).json(result.body || result);
 
+exports.listCustomers = async (req, res, next) => {
+  try { return res.json({ success: true, ...(await platformService.listCustomers(req.query, req.user)) }); }
+  catch (error) { return next(error); }
+};
+
 exports.listProducts = async (req, res, next) => {
   try { return res.json({ success: true, ...(await platformService.listProducts(req.query)) }); }
   catch (error) { return next(error); }

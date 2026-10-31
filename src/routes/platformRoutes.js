@@ -7,6 +7,7 @@ const router = express.Router();
 for (const parameter of ['productId', 'variantId', 'quotationId', 'discountId', 'taxId']) {
   router.param(parameter, validateIdParam(parameter));
 }
+router.get('/customers', requireRoles('ADMIN', 'STAFF'), controller.listCustomers);
 router.get('/products', controller.listProducts);
 router.post('/products', requireRoles('ADMIN', 'STAFF'), controller.createProduct);
 router.get('/products/:productId', controller.getProduct);

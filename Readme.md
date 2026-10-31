@@ -21,6 +21,16 @@ npm start
 The migration runner excludes sample seed data. The separate `database/init_db.ps1` script drops and
 recreates a local database; never run that destructive helper on a shared database.
 
+For a local presentation, seed fictional customers, plans, subscriptions, invoices, and simulated
+payments for one existing customer account:
+
+```sh
+DEMO_OWNER_NAME="Mohammed Faheem" npm run db:seed-demo
+```
+
+The demo seed is repeat-safe, uses `.example` emails, and records no real payments. Run it only against
+your local demo database.
+
 ## Frontend
 
 The React/Vite app lives in `frontend/`. Run the backend on port 5017, then start the frontend in a
@@ -46,7 +56,11 @@ and migrated for account and business data to load.
 - `GET|POST /api/v1/quotation-templates`; quotation list, detail, send, cancel and confirm routes
 - Subscription create/list/detail/update, activate, pause, resume and close routes
 - Invoice list/detail/generation; Stripe Checkout, refunds and signed payment webhooks
-- Discount management, `GET /api/v1/dashboard/summary`, and `POST /api/v1/billing-runs`
+- Customer and discount management, `GET /api/v1/dashboard/summary`, and `POST /api/v1/billing-runs`
+
+Closing a subscription uses `DELETE /api/v1/subscriptions/:id` and changes its status to `CLOSED`;
+the subscription and invoice history are retained for billing records. The subscriptions screen asks
+for confirmation before closing one.
 
 Use an `Authorization: Bearer <token>` header for API routes other than registration, login, password
 reset, health and signed webhooks. Writes that create subscriptions, quotations, invoices, payments, or

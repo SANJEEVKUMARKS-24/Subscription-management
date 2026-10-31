@@ -10,6 +10,7 @@
     "check": "node --check src/server.js",
     "test": "node --test test/*.test.js",
     "db:migrate": "node src/scripts/migrate.js",
+    "db:seed-demo": "node src/scripts/seedDemoPresentation.js",
     "db:create-admin": "node src/scripts/createAdmin.js",
     "billing:run": "node src/scripts/runBilling.js"
   },

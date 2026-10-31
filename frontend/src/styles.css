@@ -11,3 +11,19 @@
 @media(max-width:430px){.content{padding-left:13px;padding-right:13px}.page-head{gap:8px}.page-head h1{font-size:23px}.page-head>.button{height:35px;padding:0 9px}.metric-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.metric-card{padding:11px;min-height:121px}.metric-title{font-size:9px}.metric-value{font-size:17px}.panel-head{padding:15px 13px}.panel-head h2{font-size:12px}.text-action{font-size:9px}.topbar{padding:0 12px}.table-wrap th,.table-wrap td{padding-left:10px;padding-right:10px}.toast{right:12px;bottom:12px;left:12px;justify-content:flex-start}}
 @media print{.sidebar,.topbar,.button,.toolbar{display:none!important}.main-area{margin-left:0}.content{padding:0}.panel{border:0}}
 .pay-button{height:29px;padding:0 9px;font-size:9px}
+.create-subscription-panel{max-width:760px;margin:0 0 18px;padding:0 18px 18px}
+.create-subscription-panel .panel-head{padding:15px 0}
+.create-subscription-panel .panel-head h2{margin-top:5px}
+.subscription-form{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
+.subscription-form label{display:flex;flex-direction:column;gap:6px;color:#536057;font-size:10px;font-weight:600}
+.subscription-form input,.subscription-form select{height:38px;width:100%;border:1px solid var(--line);border-radius:7px;padding:0 10px;background:#fff;color:#47534a;font-size:11px;outline:0}
+.subscription-form input:focus,.subscription-form select:focus{border-color:#83ae8c;box-shadow:0 0 0 3px #7aae851a}
+.optional-label{font-weight:400;color:#9ba49d}
+.subscription-form-error{grid-column:1/-1}
+.subscription-form-actions{grid-column:1/-1;display:flex;justify-content:flex-end;gap:8px;padding-top:3px}
+.subscription-form-actions .button{min-height:36px}
+.create-subscription-empty{padding:12px 0;color:#89948c;font-size:11px}
+.subscription-actions{white-space:nowrap}
+.subscription-actions .text-action{margin-left:9px}
+.close-subscription-action{color:#a76252}
+@media(max-width:600px){.subscription-form{grid-template-columns:1fr}.subscription-form-error,.subscription-form-actions{grid-column:auto}}

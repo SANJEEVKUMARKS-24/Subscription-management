@@ -105,6 +105,17 @@ async function audit(client, userId, action, entityType, entityId, metadata = {}
 }
 
 class PlatformService {
+  async listCustomers(query = {}, user) {
+    if (!isManager(user)) throw fail('Only staff can list customers', 403);
+    const { limit, offset } = page(query);
+    const result = await db.query(
+      `SELECT customer_id, company_name, email, phone
+       FROM customers WHERE is_active=TRUE ORDER BY company_name, customer_id LIMIT $1 OFFSET $2`,
+      [limit, offset]
+    );
+    return { data: result.rows, meta: { limit, offset } };
+  }
+
   async listProducts(query = {}) {
     const { limit, offset } = page(query);
     const result = await db.query(
